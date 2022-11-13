@@ -11,8 +11,10 @@ PoseNet example using p5.js
 let video;
 let poseNet;
 let poses = [];
+let rawVal = 0;
 let val = 0;
-
+let midX;
+let midY;
 function setup() {
   createCanvas(640, 480);
   video = createCapture(VIDEO);
@@ -27,10 +29,12 @@ function setup() {
   });
   // Hide the video element, and just show the canvas
   video.hide();
+  midX = width / 2;
+  midY = height /2;
 }
 
 function modelReady() {
-  select("#status").html("Model Loaded");
+  select("#status").html("");
 }
 
 function draw() {
@@ -41,6 +45,9 @@ function draw() {
 //  drawSkeleton();
   drawRightHand();
 }
+
+let maxVal = 0;
+let minVal = 9999;
 
 function drawRightHand(){
     if(poses.length < 1){
@@ -53,8 +60,26 @@ function drawRightHand(){
         ellipse(hand.x, hand.y, 10, 10);
         ellipse(shoulder.x, shoulder.y, 10, 10);
         line(hand.x, hand.y, shoulder.x, shoulder.y);
-        val = shoulder.y - hand.y;
-        console.log(val);            
+        rawVal = shoulder.y - hand.y;
+        if(rawVal > maxVal){
+            maxVal = rawVal;    
+        }
+        if(rawVal < minVal){
+            minVal = rawVal;    
+        }
+        console.log(rawVal, minVal, maxVal);
+        
+        val = map(rawVal, -150, 300, height, 0)
+        if(val < 0){
+            val = 0
+        }
+        if(val > height){
+            val = height
+        }
+
+        rect(midX + 10, val, 20, midY)
+        
+
     }
 
     
