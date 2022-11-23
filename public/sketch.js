@@ -15,8 +15,19 @@ let rawVal = 0;
 let val = 0;
 let midX;
 let midY;
+
+let socket;
+
 function setup() {
   createCanvas(640, 480);
+
+  socket = io();
+
+  socket.on('msg', function (msg) {
+    console.log(msg);
+    socket.emit('val', 0)
+  });
+
   video = createCapture(VIDEO);
   video.size(width, height);
 
@@ -31,6 +42,7 @@ function setup() {
   video.hide();
   midX = width / 2;
   midY = height /2;
+  textSize(32);
 }
 
 function modelReady() {
@@ -49,6 +61,12 @@ function draw() {
 let maxVal = 0;
 let minVal = 9999;
 
+let outVal = 10;
+
+let currentVal = 0;
+
+let last_moved = 0;
+
 function drawRightHand(){
     if(poses.length < 1){
         return;
@@ -57,6 +75,7 @@ function drawRightHand(){
     const hand = pose.rightWrist;
     const shoulder = pose.rightShoulder;
     if(hand.confidence > 0.5 && shoulder.confidence > 0.5){
+        fill(100, 255, 0);
         ellipse(hand.x, hand.y, 10, 10);
         ellipse(shoulder.x, shoulder.y, 10, 10);
         line(hand.x, hand.y, shoulder.x, shoulder.y);
@@ -67,22 +86,40 @@ function drawRightHand(){
         if(rawVal < minVal){
             minVal = rawVal;    
         }
-        console.log(rawVal, minVal, maxVal);
+        // console.log(rawVal, minVal, maxVal);
         
-        val = map(rawVal, -150, 300, height, 0)
+        let val = int(map(rawVal, 100, -150, outVal, 0))
         if(val < 0){
             val = 0
         }
-        if(val > height){
-            val = height
+        if(val > outVal){
+            val = outVal
         }
 
-        rect(midX + 10, val, 20, midY)
+        if(currentVal != val){
+          currentVal = val;
+          sendVal(currentVal);
+        }
         
-
+       
+        last_moved = millis();
+        
+    }else{
+      if(millis() - last_moved > 1000 && currentVal > 0){
+        currentVal -=1
+        last_moved = millis();
+        sendVal(currentVal); 
+      }
     }
-
+    fill(255, 0, 0);
+    text(currentVal, 10, 30);
     
+}
+
+function sendVal(val){
+  console.log(val);
+  socket.emit('val', val+1)
+
 }
 
 // A function to draw ellipses over the detected keypoints
