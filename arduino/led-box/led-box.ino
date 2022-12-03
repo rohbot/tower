@@ -6,7 +6,7 @@
 #define LEDS_PER_ROW 5
 #define NUM_ROWS 10
 
-#define DATA_PIN 2
+#define DATA_PIN 3
 
 CRGB leds[NUM_LEDS];
 
@@ -15,12 +15,11 @@ unsigned long hue = 0;
 
 unsigned long last_msg = 0;
 
-int val = 0;
 
-void fadeAll()  {
+
+void fadeAll() {
   for (int i = 0; i < NUM_LEDS; i++) {
     leds[i].nscale8(250);
-
   }
   FastLED.show();
 }
@@ -31,11 +30,10 @@ void light_row(int row, CRGB colour) {
     return;
   }
 
-  for (int i = 0; i <  LEDS_PER_ROW; i++) {
+  for (int i = 0; i < LEDS_PER_ROW; i++) {
     int pixel = (LEDS_PER_ROW * row) + i;
     leds[NUM_LEDS - pixel - 1] = colour;
   }
-
 }
 
 void waitFade() {
@@ -63,44 +61,41 @@ void matrix() {
   if (millis() - last_twinkle > 100) {
     last_twinkle = millis();
     matrix_row--;
-    int pixel = ((LEDS_PER_ROW) * (matrix_row) ) + matrix_col;
+    int pixel = ((LEDS_PER_ROW) * (matrix_row)) + matrix_col;
 
     if (matrix_row % 2) {
-      pixel  = ((LEDS_PER_ROW) * (matrix_row) ) + (LEDS_PER_ROW - 1 - matrix_col);
+      pixel = ((LEDS_PER_ROW) * (matrix_row)) + (LEDS_PER_ROW - 1 - matrix_col);
       //pixel += 1;
     }
     leds[NUM_LEDS - pixel - 1] = CHSV(hue, 255, 255);
 
     FastLED.show();
-
-  }
-
-
-}
-
-
-
-void serialEvent() {
-  while (Serial.available()) {
-    val = Serial.parseInt();
-    if(val > 0){
-      val--;
-      Serial.print("Val: ");
-      Serial.println(val);
-      FastLED.clear();
-      for (int i = 0; i < val; i++) {
-        hue = map(i, 0, NUM_ROWS, 0, 160);
-        light_row(i, CHSV(hue, 255, 255));
-  
-      }
-      FastLED.show();
-  
-    }
-    
-
-    last_msg = millis();
   }
 }
+
+
+
+// void serialEvent() {
+//   while (Serial.available()) {
+//     val = Serial.parseInt();
+//     if(val > 0){
+//       val--;
+//       Serial.print("Val: ");
+//       Serial.println(val);
+//       FastLED.clear();
+//       for (int i = 0; i < val; i++) {
+//         hue = map(i, 0, NUM_ROWS, 0, 160);
+//         light_row(i, CHSV(hue, 255, 255));
+
+//       }
+//       FastLED.show();
+
+//     }
+
+
+//     last_msg = millis();
+//   }
+// }
 
 
 void setup() {
@@ -114,13 +109,11 @@ void setup() {
   for (int i = 0; i < NUM_ROWS; i++) {
     hue = map(i, 0, NUM_ROWS, 0, 160);
     light_row(i, CHSV(hue, 255, 255));
-
   }
   FastLED.show();
 
   waitFade();
   last_msg = millis();
-
 }
 
 void twinkle() {
@@ -129,10 +122,8 @@ void twinkle() {
     hue += 30;
     leds[random(NUM_LEDS)] = CHSV(hue, 255, 255);
     last_twinkle = millis();
-
   }
   FastLED.show();
-
 }
 
 unsigned long row_lit = 0;
@@ -154,12 +145,26 @@ void step_rows() {
 
 unsigned long swap = 0;
 bool make_twinkle = true;
+byte val;
 void loop() {
 
-  if(millis() - last_msg > 10000){
-    twinkle();
+  if (millis() - last_msg > 10000) {
+    matrix();
   }
-  delay(30);
-
-
+  if (Serial.available()) {
+    last_msg = millis();
+    // read the most recent byte (which will be from 0 to 255):
+    byte val = Serial.read();
+    if (val > 0) {
+      val--;
+      Serial.print("Val: ");
+      Serial.println(val);
+      FastLED.clear();
+      for (int i = 0; i < val; i++) {
+        hue = map(i, 0, NUM_ROWS, 0, 160);
+        light_row(i, CHSV(hue, 255, 255));
+      }
+      FastLED.show();
+    }
+  }
 }
